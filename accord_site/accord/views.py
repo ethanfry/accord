@@ -3,6 +3,8 @@ from django.http import HttpResponse, HttpResponseNotFound, JsonResponse, BadHea
 from django.shortcuts import get_object_or_404
 from django.views import View
 
+import json
+
 from .serializers import JsonApiSerializer
 
 def list_view_factory(model_class):
@@ -20,8 +22,9 @@ def list_view_factory(model_class):
             else:
                 queryset = model_class.objects.all()
             return HttpResponse(
-                JsonApiSerializer().serialize(queryset=queryset, model_class=model_class), 
-                content_type='application/vnd.api+json')
+                JsonApiSerializer().serialize(queryset=queryset, request=request), 
+                content_type='application/vnd.api+json',
+            )
 
     return ListView
 

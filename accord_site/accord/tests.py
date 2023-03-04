@@ -21,6 +21,10 @@ class RelatedResourceFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = models.RelatedResource
 
+    boolean_field = factory.Faker('boolean')
+    char_field = factory.Faker('text')
+    datetime_field = factory.Faker('date_time', tzinfo=timezone.get_current_timezone())
+
 
 class AccordTestCase(TestCase):
 
@@ -54,12 +58,29 @@ class AccordTestCase(TestCase):
                     self.assertEqual(0, len(array))
 
     def assertHasValidDataMember(self, dict):
+        '''
+        per https://jsonapi.org/format/#document-top-level
+        We verify that we have a 'data' member
+        and that we do not have an 'errors' member
+        '''
+
         self.assertIn('data', dict)
         self.assertNotIn('errors', dict)
         try:
             self.assertIsValidResourceDataSingle(dict['data'])
         except AssertionError as e:
             self.assertIsValidResourceDataArray(dict['data'])
+
+    def assertHasValidLinksMember(self, dict):
+        '''
+        per https://jsonapi.org/format/#document-top-level
+        Verify that we have a valid 'links' member
+
+        Note: While the 'links' member is optional per the spec,
+        we include it by default.
+        '''
+        self.assertIn('links', dict)
+
 
     def assertHasValidErrorsMember(self, dict):
         self.assertIn('errors', dict)
@@ -72,6 +93,7 @@ class AccordTestCase(TestCase):
         self.assertIn('Content-Type', response.headers)
         self.assertEqual('application/vnd.api+json', response.headers['Content-Type'])
         body = response.json()
+        self.assertHasValidLinksMember(body)
         try:
             self.assertHasValidDataMember(body)
         except AssertionError as e:
@@ -117,3 +139,6 @@ class ResourceResponseTestCase(AccordTestCase):
         response = self.client.get(f'/api/resource/{str(resources[0].id)}')
         self.assertJSONAPIResponse(response)
         self.assertIsInstance(response.json()['data'], dict)
+
+    def testResourceDetailWithRelatedResource(self):
+        pass

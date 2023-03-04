@@ -22,16 +22,18 @@ from django.utils.timezone import is_aware
 class JsonApiSerializer(JSONSerializer):
 
     def serialize(self, *args, **kwargs):
-        data = {'data': None}
         queryset = kwargs['queryset']
+        request = kwargs['request']
 
         if queryset.count() == 1:
-            data['data'] = self.serialize_instance(queryset[0])
+            data = self.serialize_instance(queryset[0])
         else:
-            data['data'] = list()
-            for el in queryset:
-                data['data'].append(self.serialize_instance(el))
-        return json.dumps(data)
+            data = [self.serialize_instance(el) for el in queryset]
+        retval = {
+            'data': data,
+            'links': {'self': request.build_absolute_uri()},
+        }
+        return json.dumps(retval)
 
     def serialize_instance(self, instance):
         retval = {'type': instance.__class__.__name__.lower(), 'id': str(instance.pk)}
