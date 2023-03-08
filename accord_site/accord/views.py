@@ -21,8 +21,16 @@ def list_view_factory(model_class):
                     return HttpResponseNotFound()
             else:
                 queryset = model_class.objects.all()
+            data = json.loads(JsonApiSerializer().serialize(queryset))
+            if isinstance(data, list) and len(data) == 1:
+                data = data[0]
+            body = {
+                'data': data,
+                'links': {'self': request.build_absolute_uri()},
+            }
             return HttpResponse(
-                JsonApiSerializer().serialize(queryset=queryset, request=request), 
+                # JsonApiSerializer().serialize(queryset=queryset, request=request), 
+                json.dumps(body), 
                 content_type='application/vnd.api+json',
             )
 

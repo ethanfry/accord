@@ -33,6 +33,11 @@ class AccordTestCase(TestCase):
         self.assertIn('type', obj_dict)
         self.assertIn('id', obj_dict)
 
+    def assertResourceObjectContainsAttributes(self, obj_dict, model):
+        self.assertIn('attributes', obj_dict)
+        field_names = set([field.name for field in model._meta.fields]) - set([model._meta.pk.name])
+        self.assertEqual(set(obj_dict['attributes'].keys()), field_names)
+
     def assertIsValidResourceIdentifier(self, obj_dict):
         pass
 
@@ -139,6 +144,7 @@ class ResourceResponseTestCase(AccordTestCase):
         response = self.client.get(f'/api/resource/{str(resources[0].id)}')
         self.assertJSONAPIResponse(response)
         self.assertIsInstance(response.json()['data'], dict)
+        self.assertResourceObjectContainsAttributes(response.json()['data'], models.Resource)
 
     def testResourceDetailWithRelatedResource(self):
         pass
