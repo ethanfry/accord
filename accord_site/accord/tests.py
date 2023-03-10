@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import tag, TestCase
 from django.utils import timezone
 
 import factory
@@ -24,6 +24,7 @@ class RelatedResourceFactory(factory.django.DjangoModelFactory):
     boolean_field = factory.Faker('boolean')
     char_field = factory.Faker('text')
     datetime_field = factory.Faker('date_time', tzinfo=timezone.get_current_timezone())
+    resource = factory.SubFactory(ResourceFactory)
 
 
 class AccordTestCase(TestCase):
@@ -32,9 +33,9 @@ class AccordTestCase(TestCase):
         self.assertIsInstance(obj_dict, dict)
         self.assertIn('type', obj_dict)
         self.assertIn('id', obj_dict)
-
-    def assertResourceObjectContainsAttributes(self, obj_dict, model):
         self.assertIn('attributes', obj_dict)
+        self.assertIn('relationships', obj_dict)
+        model = getattr(models, obj_dict['type'].capitalize())
         field_names = set([field.name for field in model._meta.fields]) - set([model._meta.pk.name])
         self.assertEqual(set(obj_dict['attributes'].keys()), field_names)
 
@@ -144,7 +145,17 @@ class ResourceResponseTestCase(AccordTestCase):
         response = self.client.get(f'/api/resource/{str(resources[0].id)}')
         self.assertJSONAPIResponse(response)
         self.assertIsInstance(response.json()['data'], dict)
-        self.assertResourceObjectContainsAttributes(response.json()['data'], models.Resource)
 
+    @tag('my')
     def testResourceDetailWithRelatedResource(self):
-        pass
+        '''
+        https://jsonapi.org/format/#document-resource-object-relationships
+        '''
+        resource = ResourceFactory.create()
+        related_resources = RelatedResourceFactory(resource=resource)
+        response = self.client.get(f'/api/resource/{str(resource.id)}')
+        self.assertJSONAPIResponse(response)
+        self.assertIn(response.json())
+
+        breakpoint()
+        print('hi')

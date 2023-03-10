@@ -39,7 +39,7 @@ class Resource(models.Model):
 
 
 class RelatedResource(models.Model):
-    id = models.UUIDField(primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     resource = models.ForeignKey(Resource, on_delete=models.CASCADE)
     boolean_field = models.BooleanField()
     char_field = models.CharField(max_length=200)

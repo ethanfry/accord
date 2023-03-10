@@ -1,0 +1,29 @@
+GET /resource
+     - list 00xx
+        - resource dne 0000
+            MUST status code 404
+            MUST tld 'errors' block
+            MUST error "DNE"
+            MUST NOT tld data
+        - resource exists 001x
+            MUST status code 200
+            MUST tld data block
+            MUST NOT tld 'errors'
+            - resource DOES NOT have related resources in schema 0010
+                MUST NOT HAVE data.relationships
+            - resource DOES have related resources in schema 0011
+                MUST HAVE data.relationships
+                
+
+
+
+
+
+
+
+
+data.relationships
+    - MUST BE LIST of RELATIONSHIP OBJECTS
+
+RELATIONSHIP OBJECT
+    -
