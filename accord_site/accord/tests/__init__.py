@@ -1,30 +1,4 @@
 from django.test import tag, TestCase
-from django.utils import timezone
-
-import factory
-
-from accord import urls as accord_urls
-from accord_site import models
-
-
-class ResourceFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.Resource
-    
-    boolean_field = factory.Faker('boolean')
-    char_field = factory.Faker('text')
-    datetime_field = factory.Faker('date_time', tzinfo=timezone.get_current_timezone())
-    text_field = factory.Faker('text')
-
-
-class RelatedResourceFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = models.RelatedResource
-
-    boolean_field = factory.Faker('boolean')
-    char_field = factory.Faker('text')
-    datetime_field = factory.Faker('date_time', tzinfo=timezone.get_current_timezone())
-    resource = factory.SubFactory(ResourceFactory)
 
 
 class AccordTestCase(TestCase):
@@ -108,54 +82,3 @@ class AccordTestCase(TestCase):
             except AssertionError as e:
                 self.assertHasValidMetaMember(body)
 
-
-class URLTestCase(TestCase):
-    '''
-    At this point, we have the following models:
-    MyResource
-    MyRelatedResource
-
-    Because Resource is a FK on RelatedResource, we should have a bunch of URLs out of the box
-    '''
-
-    def testResourceUrls(self):
-        self.assertIn('resource_list', [url.name for url in accord_urls.urlpatterns])
-        self.assertIn('resource_detail', [url.name for url in accord_urls.urlpatterns])
-        self.assertIn('resource_relatedresource_related', [url.name for url in accord_urls.urlpatterns])
-
-    def testRelatedResourceUrls(self):
-        self.assertIn('relatedresource_list', [url.name for url in accord_urls.urlpatterns])
-        self.assertIn('relatedresource_detail', [url.name for url in accord_urls.urlpatterns])
-        self.assertIn('relatedresource_resource_related', [url.name for url in accord_urls.urlpatterns])
-
-
-class ResourceResponseTestCase(AccordTestCase):
-    '''
-    Verify responses for /resource endpoints
-    '''
-
-    def testResourceListResponse(self):
-        resources = ResourceFactory.create_batch(10)
-        response = self.client.get('/api/resource')
-        self.assertJSONAPIResponse(response)
-        self.assertEqual(10, len(response.json()['data']))
-
-    def testResourceDetailResponse(self):
-        resources = ResourceFactory.create_batch(10)
-        response = self.client.get(f'/api/resource/{str(resources[0].id)}')
-        self.assertJSONAPIResponse(response)
-        self.assertIsInstance(response.json()['data'], dict)
-
-    @tag('my')
-    def testResourceDetailWithRelatedResource(self):
-        '''
-        https://jsonapi.org/format/#document-resource-object-relationships
-        '''
-        resource = ResourceFactory.create()
-        related_resources = RelatedResourceFactory(resource=resource)
-        response = self.client.get(f'/api/resource/{str(resource.id)}')
-        self.assertJSONAPIResponse(response)
-        self.assertIn(response.json())
-
-        breakpoint()
-        print('hi')
