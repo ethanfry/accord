@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+from accord import urls as accord_urls
+
 
 class URLTestCase(TestCase):
     '''
