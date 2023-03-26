@@ -23,8 +23,7 @@ class ResourceResponseTestCase(AccordTestCase):
         self.assertIsValidJsonApiResponse(response)
         self.assertResponseMatchesDB(ResourceFactory._meta.get_model_class(), response.json()['data'])
 
-    @tag('my')
-    def testResourceDetailWithRelatedResource(self):
+    def testResourceDetailWithRelatedResourceWithoutRelatedFlag(self):
         '''
         https://jsonapi.org/format/#document-resource-object-relationships
         '''
@@ -32,4 +31,25 @@ class ResourceResponseTestCase(AccordTestCase):
         related_resources = RelatedResourceFactory(resource=resource)
         response = self.client.get(f'/api/resource/{str(resource.id)}')
         self.assertIsValidJsonApiResponse(response)
+
+    @tag('my')
+    def testResourceDetailWithRelatedResourceWithRelatedFlag(self):
+        '''
+        https://jsonapi.org/format/#document-resource-object-relationships
+        '''
+        resource = ResourceFactory.create()
+        related_resources = RelatedResourceFactory(resource=resource)
+        response = self.client.get(f'/api/resource/{str(resource.id)}?include=related_resource')
+        self.assertIsValidJsonApiResponse(response)
+
+    def testResourceDetailWithRelatedResourceWithUnknownRelatedFlag(self):
+        '''
+        https://jsonapi.org/format/#document-resource-object-relationships
+        '''
+        resource = ResourceFactory.create()
+        related_resources = RelatedResourceFactory(resource=resource)
+        response = self.client.get(f'/api/resource/{str(resource.id)}?include=foo')
+        self.assertIsValidJsonApiResponse(response)
+        self.assertIn('errors', response.json())
+        self.assertEqual('Unknown Relationship Error', response.json()['errors'][0]['title'])
 
